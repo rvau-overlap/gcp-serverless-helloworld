@@ -1,11 +1,13 @@
-from flask import Flask, request
+from flask import Flask, request, send_from_directory, jsonify
 from markupsafe import escape
 import os
 
-app = Flask(__name__)
+# Disable Flask's default static file serving
+app = Flask(__name__, static_folder=None)
 
-@app.route('/')
-def hello():
+@app.route('/api/userinfo')
+def get_user_info():
+    """API endpoint to return user information"""
     user_agent = escape(request.headers.get('User-Agent', 'Unknown'))
     
     # Get the real IP address (considering proxy headers)
@@ -16,50 +18,28 @@ def hello():
     else:
         ip_address = escape(request.remote_addr or 'Unknown')
     
-    return f"""
-    <html>
-    <head>
-        <title>Hello World</title>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 50px auto;
-                padding: 20px;
-                background-color: #f5f5f5;
-            }}
-            .container {{
-                background-color: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }}
-            h1 {{
-                color: #4285f4;
-            }}
-            .info {{
-                margin: 10px 0;
-                padding: 10px;
-                background-color: #f8f9fa;
-                border-left: 4px solid #4285f4;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Hello, world!</h1>
-            <div class="info">
-                <strong>Your User Agent:</strong><br>
-                {user_agent}
-            </div>
-            <div class="info">
-                <strong>Your IP Address:</strong><br>
-                {ip_address}
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+    return jsonify({
+        'userAgent': str(user_agent),
+        'ipAddress': str(ip_address)
+    })
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_react_app(path):
+    """Serve the React application and its static assets"""
+    build_folder = os.path.join(os.path.dirname(__file__), 'frontend', 'build')
+    
+    # If path is empty or root, serve index.html
+    if path == '':
+        return send_from_directory(build_folder, 'index.html')
+    
+    # send_from_directory has built-in protection against path traversal
+    # Try to serve the requested file
+    try:
+        return send_from_directory(build_folder, path)
+    except:
+        # For client-side routing, return index.html for unknown routes
+        return send_from_directory(build_folder, 'index.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
