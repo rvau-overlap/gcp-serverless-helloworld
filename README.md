@@ -1,9 +1,11 @@
 # GCP Serverless Hello World
 
-A simple serverless application deployed to Google Cloud Run that displays "Hello, world!" along with the visitor's user agent and IP address.
+A simple serverless application deployed to Google Cloud Run that displays "Hello, world!" along with the visitor's user agent and IP address. The application features a React frontend with a Flask backend API.
 
 ## Features
 
+- React-based frontend for enhanced user experience
+- Flask backend API for serving user information
 - Displays a greeting message
 - Shows the visitor's User Agent
 - Shows the visitor's IP address (with proxy support)
@@ -11,9 +13,10 @@ A simple serverless application deployed to Google Cloud Run that displays "Hell
 
 ## Application Structure
 
-- `app.py` - Main Flask application
+- `app.py` - Flask backend API serving React app and user information endpoint
+- `frontend/` - React frontend application
 - `requirements.txt` - Python dependencies
-- `Dockerfile` - Container configuration for Cloud Run
+- `Dockerfile` - Multi-stage container build (Node.js for React, Python for Flask)
 - `.github/workflows/deploy-to-gcp.yml` - GitHub Actions workflow for automatic deployment
 
 ## Setup Instructions
@@ -160,21 +163,42 @@ The deployment workflow will:
 To run the application locally:
 
 ```bash
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
-# Run the application
+# Build the React frontend
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Run the Flask application
 python app.py
 ```
 
 The app will be available at `http://localhost:8080`
+
+#### Development Mode
+
+For frontend development with hot reloading:
+
+```bash
+# Terminal 1: Run Flask backend
+python app.py
+
+# Terminal 2: Run React dev server (in frontend directory)
+cd frontend
+npm start
+```
+
+Note: In development mode, the React dev server runs on port 3000 and proxies API calls to Flask on port 8080.
 
 ### Local Docker Testing
 
 To test the Docker container locally:
 
 ```bash
-# Build the image
+# Build the image (includes React build)
 docker build -t helloworld-app .
 
 # Run the container
