@@ -1,17 +1,19 @@
 from flask import Flask, request
+from markupsafe import escape
 import os
 
 app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    user_agent = request.headers.get('User-Agent', 'Unknown')
+    user_agent = escape(request.headers.get('User-Agent', 'Unknown'))
     
     # Get the real IP address (considering proxy headers)
+    # Note: In Cloud Run, X-Forwarded-For is set by the platform and can be trusted
     if request.headers.get('X-Forwarded-For'):
-        ip_address = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        ip_address = escape(request.headers.get('X-Forwarded-For').split(',')[0].strip())
     else:
-        ip_address = request.remote_addr
+        ip_address = escape(request.remote_addr)
     
     return f"""
     <html>
